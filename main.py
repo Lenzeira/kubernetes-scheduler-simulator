@@ -2,6 +2,11 @@ from src.pod import Pod
 from src.worker import Worker
 from src.master import Master
 from src.scheduler import BalancedResourceScheduler
+from src.metrics import (
+    show_workers_status,
+    show_pending_pods,
+    show_statistics
+)
 
 
 def create_workers():
@@ -27,37 +32,6 @@ def create_pods():
     ]
 
 
-def show_result(workers, pending_pods):
-
-    print("\n=== ALOCAÇÃO DOS PODS NOS WORKERS ===")
-
-    for worker in workers:
-
-        print(f"\n{worker}")
-
-        if worker.pods:
-
-            for pod in worker.pods:
-
-                print(f"  - {pod.name}")
-
-        else:
-
-            print("  - Nenhum POD alocado")
-
-    print("\n=== PODS PENDENTES ===")
-
-    if pending_pods:
-
-        for pod in pending_pods:
-
-            print(f"  - {pod}")
-
-    else:
-
-        print("Nenhum POD pendente.")
-
-
 def main():
 
     workers = create_workers()
@@ -72,7 +46,15 @@ def main():
 
     master.schedule_all(pods)
 
-    show_result(workers, master.pending_pods)
+    show_workers_status(workers)
+
+    show_pending_pods(master.pending_pods)
+
+    show_statistics(
+        workers,
+        master.allocated_pods,
+        master.pending_pods
+    )
 
 
 if __name__ == "__main__":
