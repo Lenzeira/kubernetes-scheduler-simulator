@@ -50,3 +50,16 @@ class BalancedResourceScheduler:
         )
 
         return imbalance
+
+
+class FirstFitScheduler:
+
+    def select_worker(self, pod, workers):
+
+        for worker in workers:
+
+            if worker.can_allocate(pod):
+
+                return worker
+
+        return None

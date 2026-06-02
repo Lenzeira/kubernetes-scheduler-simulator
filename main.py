@@ -1,7 +1,7 @@
 from src.pod import Pod
 from src.worker import Worker
 from src.master import Master
-from src.scheduler import BalancedResourceScheduler
+from src.scheduler import BalancedResourceScheduler, FirstFitScheduler
 from src.metrics import (
     show_workers_status,
     show_pending_pods,
@@ -32,17 +32,17 @@ def create_pods():
     ]
 
 
-def main():
+def run_simulation(title, scheduler):
 
     workers = create_workers()
 
     pods = create_pods()
 
-    scheduler = BalancedResourceScheduler()
-
     master = Master(workers, scheduler)
 
-    print("Iniciando simulação de escalonamento...\n")
+    print(f"\n\n==============================")
+    print(title)
+    print(f"==============================")
 
     master.schedule_all(pods)
 
@@ -54,6 +54,19 @@ def main():
         workers,
         master.allocated_pods,
         master.pending_pods
+    )
+
+
+def main():
+
+    run_simulation(
+        "SIMULAÇÃO COM ESCALONADOR BALANCEADO",
+        BalancedResourceScheduler()
+    )
+
+    run_simulation(
+        "SIMULAÇÃO COM FIRST FIT",
+        FirstFitScheduler()
     )
 
 
