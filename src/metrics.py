@@ -62,21 +62,30 @@ def show_statistics(workers, allocated_pods, pending_pods):
 
     for worker in workers:
 
-        cpu_usage = (worker.used_cpu / worker.total_cpu) * 100
-
-        memory_usage = (worker.used_memory / worker.total_memory) * 100
-
-        if worker.total_gpu > 0:
-
-            gpu_usage = (worker.used_gpu / worker.total_gpu) * 100
-
-        else:
-
-            gpu_usage = 0
-
         print(
             f"{worker.name}: "
-            f"CPU {cpu_usage:.2f}% | "
-            f"Memória {memory_usage:.2f}% | "
-            f"GPU {gpu_usage:.2f}%"
+            f"CPU {worker.cpu_usage_percent():.2f}% | "
+            f"Memória {worker.memory_usage_percent():.2f}% | "
+            f"Disco {worker.disk_usage_percent():.2f}% | "
+            f"Latência {worker.latency_ms}ms"
         )
+
+    total_violations = []
+
+    for worker in workers:
+
+        for violation in worker.policy_violations:
+
+            total_violations.append(f"{worker.name}: {violation}")
+
+    print("\n=== VIOLAÇÕES DE MÉTRICAS EXTRAS ===")
+
+    if not total_violations:
+
+        print("Nenhuma violação registrada.")
+
+    else:
+
+        for violation in total_violations:
+
+            print(f"- {violation}")

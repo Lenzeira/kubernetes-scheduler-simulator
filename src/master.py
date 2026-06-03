@@ -21,7 +21,22 @@ class Master:
 
             return False
 
-        selected_worker.allocate_pod(pod)
+        strict_allocation = getattr(
+            self.scheduler,
+            "strict_allocation",
+            True
+        )
+
+        was_allocated = selected_worker.allocate_pod(
+            pod,
+            strict=strict_allocation
+        )
+
+        if not was_allocated:
+
+            self.pending_pods.append(pod)
+
+            return False
 
         self.allocated_pods.append(pod)
 

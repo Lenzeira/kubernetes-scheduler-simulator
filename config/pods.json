@@ -1,58 +1,137 @@
 [
     {
-        "name": "pod-api",
+        "name": "pod-payment",
+        "cpu_required": 2,
+        "memory_required": 3,
+        "disk_required": 10,
+        "max_latency_ms": 15,
+        "profile": "latency",
+        "priority": 5
+    },
+    {
+        "name": "pod-ai-training",
+        "cpu_required": 7,
+        "memory_required": 12,
+        "disk_required": 60,
+        "max_latency_ms": 100,
+        "profile": "cpu",
+        "priority": 5
+    },
+    {
+        "name": "pod-edge-low-latency",
+        "cpu_required": 1,
+        "memory_required": 1,
+        "disk_required": 5,
+        "max_latency_ms": 12,
+        "profile": "latency",
+        "priority": 4
+    },
+    {
+        "name": "pod-api-low-latency",
         "cpu_required": 2,
         "memory_required": 4,
-        "gpu_required": 0,
-        "priority": 2
+        "disk_required": 20,
+        "max_latency_ms": 20,
+        "profile": "latency",
+        "priority": 4
     },
     {
         "name": "pod-database",
         "cpu_required": 4,
         "memory_required": 8,
-        "gpu_required": 0,
+        "disk_required": 40,
+        "max_latency_ms": 60,
+        "profile": "memory",
+        "priority": 4
+    },
+    {
+        "name": "pod-cpu-heavy",
+        "cpu_required": 6,
+        "memory_required": 4,
+        "disk_required": 20,
+        "max_latency_ms": 100,
+        "profile": "cpu",
+        "priority": 4
+    },
+    {
+        "name": "pod-storage-01",
+        "cpu_required": 2,
+        "memory_required": 4,
+        "disk_required": 120,
+        "max_latency_ms": 100,
+        "profile": "storage",
         "priority": 3
     },
     {
-        "name": "pod-ai-training",
-        "cpu_required": 6,
-        "memory_required": 16,
-        "gpu_required": 1,
-        "priority": 5
+        "name": "pod-storage-02",
+        "cpu_required": 3,
+        "memory_required": 6,
+        "disk_required": 160,
+        "max_latency_ms": 100,
+        "profile": "storage",
+        "priority": 3
+    },
+    {
+        "name": "pod-analytics",
+        "cpu_required": 5,
+        "memory_required": 12,
+        "disk_required": 50,
+        "max_latency_ms": 90,
+        "profile": "memory",
+        "priority": 3
     },
     {
         "name": "pod-cache",
         "cpu_required": 1,
         "memory_required": 2,
-        "gpu_required": 0,
-        "priority": 1
+        "disk_required": 10,
+        "max_latency_ms": 30,
+        "profile": "light",
+        "priority": 2
     },
     {
         "name": "pod-monitoring",
-        "cpu_required": 2,
-        "memory_required": 2,
-        "gpu_required": 0,
-        "priority": 2
-    },
-    {
-        "name": "pod-heavy-gpu",
-        "cpu_required": 8,
-        "memory_required": 24,
-        "gpu_required": 2,
-        "priority": 4
-    },
-    {
-        "name": "pod-small-job",
         "cpu_required": 1,
-        "memory_required": 1,
-        "gpu_required": 0,
-        "priority": 1
+        "memory_required": 2,
+        "disk_required": 8,
+        "max_latency_ms": 25,
+        "profile": "latency",
+        "priority": 2
     },
     {
         "name": "pod-report",
-        "cpu_required": 3,
-        "memory_required": 6,
-        "gpu_required": 0,
+        "cpu_required": 2,
+        "memory_required": 4,
+        "disk_required": 30,
+        "max_latency_ms": 80,
+        "profile": "balanced",
         "priority": 2
+    },
+    {
+        "name": "pod-light-01",
+        "cpu_required": 1,
+        "memory_required": 1,
+        "disk_required": 10,
+        "max_latency_ms": 100,
+        "profile": "light",
+        "priority": 1
+    },
+    {
+        "name": "pod-light-02",
+        "cpu_required": 1,
+        "memory_required": 2,
+        "disk_required": 15,
+        "max_latency_ms": 80,
+        "profile": "light",
+        "priority": 1
+    },
+    {
+        "name": "pod-batch",
+        "cpu_required": 3,
+        "memory_required": 5,
+        "disk_required": 25,
+        "max_latency_ms": 100,
+        "profile": "balanced",
+        "priority": 1
     }
 ]

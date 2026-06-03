@@ -3,7 +3,7 @@ import json
 from src.pod import Pod
 from src.worker import Worker
 from src.master import Master
-from src.scheduler import BalancedResourceScheduler, FirstFitScheduler
+from src.scheduler import BalancedResourceScheduler, KubernetesDefaultScheduler
 from src.metrics import (
     show_workers_status,
     show_pending_pods,
@@ -23,7 +23,8 @@ def load_workers(file_path):
             worker["name"],
             worker["total_cpu"],
             worker["total_memory"],
-            worker["total_gpu"]
+            worker["total_disk"],
+            worker["latency_ms"]
         )
         for worker in workers_data
     ]
@@ -40,7 +41,9 @@ def load_pods(file_path):
             pod["name"],
             pod["cpu_required"],
             pod["memory_required"],
-            pod["gpu_required"],
+            pod["disk_required"],
+            pod["max_latency_ms"],
+            pod["profile"],
             pod["priority"]
         )
         for pod in pods_data
@@ -65,26 +68,22 @@ def build_result(title, workers, allocated_pods, pending_pods):
 
     workers_usage = []
 
+    violations = []
+
     for worker in workers:
-
-        cpu_usage = (worker.used_cpu / worker.total_cpu) * 100
-
-        memory_usage = (worker.used_memory / worker.total_memory) * 100
-
-        if worker.total_gpu > 0:
-
-            gpu_usage = (worker.used_gpu / worker.total_gpu) * 100
-
-        else:
-
-            gpu_usage = 0
 
         workers_usage.append({
             "name": worker.name,
-            "cpu_usage": cpu_usage,
-            "memory_usage": memory_usage,
-            "gpu_usage": gpu_usage
+            "cpu_usage": worker.cpu_usage_percent(),
+            "memory_usage": worker.memory_usage_percent(),
+            "disk_usage": worker.disk_usage_percent(),
+            "latency_ms": worker.latency_ms,
+            "pods": [pod.name for pod in worker.pods]
         })
+
+        for violation in worker.policy_violations:
+
+            violations.append(f"{worker.name}: {violation}")
 
     return {
         "title": title,
@@ -93,7 +92,8 @@ def build_result(title, workers, allocated_pods, pending_pods):
         "pending_pods": pending_count,
         "allocation_rate": allocation_rate,
         "workers": workers_usage,
-        "pending_names": [pod.name for pod in pending_pods]
+        "pending_names": [pod.name for pod in pending_pods],
+        "violations": violations
     }
 
 
@@ -135,15 +135,15 @@ def main():
 
     simulation_results.append(
         run_simulation(
-            "SIMULAÇÃO COM ESCALONADOR BALANCEADO",
+            "SIMULAÇÃO COM ESCALONADOR PROPOSTO",
             BalancedResourceScheduler()
         )
     )
 
     simulation_results.append(
         run_simulation(
-            "SIMULAÇÃO COM FIRST FIT",
-            FirstFitScheduler()
+            "SIMULAÇÃO COM ESCALONADOR PADRÃO DO KUBERNETES",
+            KubernetesDefaultScheduler()
         )
     )
 
