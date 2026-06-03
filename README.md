@@ -427,10 +427,6 @@ Esse arquivo ajuda na análise dos resultados e também serve como apoio para a 
 
 ---
 
-
-
----
-
 ## Observações finais
 
 Esta implementação não executa PODs reais em um cluster Kubernetes. Ela reproduz, em simulação, os elementos centrais pedidos no trabalho: Master, Workers, PODs, métricas de alocação, algoritmo de escalonamento, monitoramento, estatísticas e comparação com uma estratégia baseada no escalonador padrão.
