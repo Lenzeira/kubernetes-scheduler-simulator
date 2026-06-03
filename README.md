@@ -427,11 +427,7 @@ Esse arquivo ajuda na análise dos resultados e também serve como apoio para a 
 
 ---
 
-## Sobre o script Shell
 
-O arquivo `scripts/run.sh` é apenas um atalho para executar o projeto pelo terminal Linux.
-
-Por esse motivo, o GitHub pode mostrar uma pequena porcentagem da linguagem `Shell` no repositório. A maior parte do projeto continua sendo Python.
 
 ---
 
