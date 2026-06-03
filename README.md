@@ -36,9 +36,42 @@ kubernetes-scheduler-simulator/
 ├── requirements.txt
 ├── .gitignore
 │
-└── src/
-    ├── pod.py
-    ├── worker.py
-    ├── master.py
-    ├── scheduler.py
-    └── metrics.py
+├── config/
+│   ├── workers.json
+│   └── pods.json
+│
+├── reports/
+│   └── resultados.txt
+│
+├── scripts/
+│   └── run.sh
+│
+├── src/
+│   ├── __init__.py
+│   ├── pod.py
+│   ├── worker.py
+│   ├── master.py
+│   ├── scheduler.py
+│   ├── metrics.py
+│   └── report.py
+│
+└── tests/
+    └── test_scheduler.py
+```
+---
+
+# Execução dos Testes
+
+## Rodar testes automatizados
+
+```bash
+PYTHONPATH=. pytest
+```
+
+Os testes verificam:
+
+- Alocação de PODs
+- Limites de recursos
+- Funcionamento do escalonador balanceado
+- Funcionamento do First Fit
+- Registro de PODs pendentes
