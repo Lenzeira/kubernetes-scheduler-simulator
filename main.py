@@ -9,6 +9,7 @@ from src.metrics import (
     show_pending_pods,
     show_statistics
 )
+from src.report import generate_report
 
 
 def load_workers(file_path):
@@ -46,6 +47,56 @@ def load_pods(file_path):
     ]
 
 
+def build_result(title, workers, allocated_pods, pending_pods):
+
+    total_pods = len(allocated_pods) + len(pending_pods)
+
+    allocated_count = len(allocated_pods)
+
+    pending_count = len(pending_pods)
+
+    if total_pods > 0:
+
+        allocation_rate = (allocated_count / total_pods) * 100
+
+    else:
+
+        allocation_rate = 0
+
+    workers_usage = []
+
+    for worker in workers:
+
+        cpu_usage = (worker.used_cpu / worker.total_cpu) * 100
+
+        memory_usage = (worker.used_memory / worker.total_memory) * 100
+
+        if worker.total_gpu > 0:
+
+            gpu_usage = (worker.used_gpu / worker.total_gpu) * 100
+
+        else:
+
+            gpu_usage = 0
+
+        workers_usage.append({
+            "name": worker.name,
+            "cpu_usage": cpu_usage,
+            "memory_usage": memory_usage,
+            "gpu_usage": gpu_usage
+        })
+
+    return {
+        "title": title,
+        "total_pods": total_pods,
+        "allocated_pods": allocated_count,
+        "pending_pods": pending_count,
+        "allocation_rate": allocation_rate,
+        "workers": workers_usage,
+        "pending_names": [pod.name for pod in pending_pods]
+    }
+
+
 def run_simulation(title, scheduler):
 
     workers = load_workers("config/workers.json")
@@ -70,18 +121,38 @@ def run_simulation(title, scheduler):
         master.pending_pods
     )
 
+    return build_result(
+        title,
+        workers,
+        master.allocated_pods,
+        master.pending_pods
+    )
+
 
 def main():
 
-    run_simulation(
-        "SIMULAÇÃO COM ESCALONADOR BALANCEADO",
-        BalancedResourceScheduler()
+    simulation_results = []
+
+    simulation_results.append(
+        run_simulation(
+            "SIMULAÇÃO COM ESCALONADOR BALANCEADO",
+            BalancedResourceScheduler()
+        )
     )
 
-    run_simulation(
-        "SIMULAÇÃO COM FIRST FIT",
-        FirstFitScheduler()
+    simulation_results.append(
+        run_simulation(
+            "SIMULAÇÃO COM FIRST FIT",
+            FirstFitScheduler()
+        )
     )
+
+    generate_report(
+        "reports/resultados.txt",
+        simulation_results
+    )
+
+    print("\nRelatório gerado em reports/resultados.txt")
 
 
 if __name__ == "__main__":

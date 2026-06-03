@@ -1,0 +1,37 @@
+RELATÓRIO DA SIMULAÇÃO DE ESCALONAMENTO
+==================================================
+
+SIMULAÇÃO COM ESCALONADOR BALANCEADO
+--------------------------------------------------
+Total de PODs: 8
+PODs alocados: 7
+PODs pendentes: 1
+Taxa de alocação: 87.50%
+
+Uso dos Workers:
+- worker-1: CPU 62.50% | Memória 62.50% | GPU 0.00%
+- worker-2: CPU 50.00% | Memória 25.00% | GPU 0.00%
+- worker-3: CPU 100.00% | Memória 84.38% | GPU 50.00%
+
+PODs pendentes:
+- pod-heavy-gpu
+
+
+SIMULAÇÃO COM FIRST FIT
+--------------------------------------------------
+Total de PODs: 8
+PODs alocados: 5
+PODs pendentes: 3
+Taxa de alocação: 62.50%
+
+Uso dos Workers:
+- worker-1: CPU 75.00% | Memória 100.00% | GPU 100.00%
+- worker-2: CPU 100.00% | Memória 100.00% | GPU 0.00%
+- worker-3: CPU 100.00% | Memória 93.75% | GPU 100.00%
+
+PODs pendentes:
+- pod-report
+- pod-cache
+- pod-small-job
+
+
