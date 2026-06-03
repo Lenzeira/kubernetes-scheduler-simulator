@@ -1,58 +1,113 @@
 RELATÓRIO DA SIMULAÇÃO DE ESCALONAMENTO
-==================================================
+============================================================
 
 SIMULAÇÃO COM ESCALONADOR PROPOSTO
---------------------------------------------------
-Total de PODs: 15
-PODs alocados: 10
-PODs pendentes: 5
-Taxa de alocação: 66.67%
+------------------------------------------------------------
+Total de PODs     : 15
+PODs alocados     : 10
+PODs pendentes    : 5
+Taxa de alocação  : 66.67%
 
 Uso dos Workers:
-- worker-1: CPU 100.00% | Memória 81.25% | Disco 63.00% | Latência 10ms
-  PODs: pod-payment, pod-edge-low-latency, pod-api-low-latency, pod-cache, pod-monitoring, pod-light-01
-- worker-2: CPU 100.00% | Memória 100.00% | Disco 64.00% | Latência 35ms
-  PODs: pod-database, pod-storage-01
-- worker-3: CPU 66.67% | Memória 43.75% | Disco 93.75% | Latência 70ms
-  PODs: pod-ai-training, pod-light-02
+  Worker           CPU   Memória   Disco   Latência  PODs
+  ──────────────────────────────────────────────────
+  worker-1      100.0%     81.2%   63.0%       10ms     6
+                CPU  [███████████████]
+                MEM  [████████████░░░]
+                DSK  [█████████░░░░░░]
+                PODs: pod-payment, pod-edge-low-latency, pod-api-low-latency, pod-cache, pod-monitoring, pod-light-01
+
+  worker-2      100.0%    100.0%   64.0%       35ms     2
+                CPU  [███████████████]
+                MEM  [███████████████]
+                DSK  [█████████░░░░░░]
+                PODs: pod-database, pod-storage-01
+
+  worker-3       66.7%     43.8%   93.8%       70ms     2
+                CPU  [█████████░░░░░░]
+                MEM  [██████░░░░░░░░░]
+                DSK  [██████████████░]
+                PODs: pod-ai-training, pod-light-02
+
+  ──────────────────────────────────────────────────
+  Média          88.9%     75.0%   73.6%
+  Máximo        100.0%    100.0%   93.8%
+  Mínimo         66.7%     43.8%   63.0%
 
 PODs pendentes:
-- pod-cpu-heavy
-- pod-storage-02
-- pod-analytics
-- pod-report
-- pod-batch
+  - pod-cpu-heavy
+  - pod-storage-02
+  - pod-analytics
+  - pod-report
+  - pod-batch
 
 Violações de métricas extras:
-- Nenhuma violação registrada
+  - Nenhuma violação registrada
 
 
 SIMULAÇÃO COM ESCALONADOR PADRÃO DO KUBERNETES
---------------------------------------------------
-Total de PODs: 15
-PODs alocados: 11
-PODs pendentes: 4
-Taxa de alocação: 73.33%
+------------------------------------------------------------
+Total de PODs     : 15
+PODs alocados     : 11
+PODs pendentes    : 4
+Taxa de alocação  : 73.33%
 
 Uso dos Workers:
-- worker-1: CPU 100.00% | Memória 87.50% | Disco 165.00% | Latência 10ms
-  PODs: pod-payment, pod-edge-low-latency, pod-api-low-latency, pod-storage-01, pod-cache
-- worker-2: CPU 100.00% | Memória 91.67% | Disco 23.20% | Latência 35ms
-  PODs: pod-database, pod-monitoring, pod-light-01
-- worker-3: CPU 100.00% | Memória 68.75% | Disco 312.50% | Latência 70ms
-  PODs: pod-ai-training, pod-storage-02, pod-report
+  Worker           CPU   Memória   Disco   Latência  PODs
+  ──────────────────────────────────────────────────
+  worker-1      100.0%     87.5%  165.0%       10ms     5
+                CPU  [███████████████]
+                MEM  [█████████████░░]
+                DSK  [███████████████]
+                PODs: pod-payment, pod-edge-low-latency, pod-api-low-latency, pod-storage-01, pod-cache
+
+  worker-2      100.0%     91.7%   23.2%       35ms     3
+                CPU  [███████████████]
+                MEM  [█████████████░░]
+                DSK  [███░░░░░░░░░░░░]
+                PODs: pod-database, pod-monitoring, pod-light-01
+
+  worker-3      100.0%     68.8%  312.5%       70ms     3
+                CPU  [███████████████]
+                MEM  [██████████░░░░░]
+                DSK  [███████████████]
+                PODs: pod-ai-training, pod-storage-02, pod-report
+
+  ──────────────────────────────────────────────────
+  Média         100.0%     82.6%  166.9%
+  Máximo        100.0%     91.7%  312.5%
+  Mínimo        100.0%     68.8%   23.2%
 
 PODs pendentes:
-- pod-cpu-heavy
-- pod-analytics
-- pod-light-02
-- pod-batch
+  - pod-cpu-heavy
+  - pod-analytics
+  - pod-light-02
+  - pod-batch
 
 Violações de métricas extras:
-- worker-1: pod-storage-01: uso de disco acima da capacidade do Worker
-- worker-1: pod-cache: uso de disco acima da capacidade do Worker
-- worker-2: pod-monitoring: latência do Worker acima do limite do POD
-- worker-3: pod-storage-02: uso de disco acima da capacidade do Worker
-- worker-3: pod-report: uso de disco acima da capacidade do Worker
+  - worker-1: pod-storage-01: uso de disco acima da capacidade do Worker
+  - worker-1: pod-cache: uso de disco acima da capacidade do Worker
+  - worker-2: pod-monitoring: latência do Worker acima do limite do POD
+  - worker-3: pod-storage-02: uso de disco acima da capacidade do Worker
+  - worker-3: pod-report: uso de disco acima da capacidade do Worker
 
 
+============================================================
+COMPARAÇÃO ENTRE ESCALONADORES
+============================================================
+
+  Métrica                                       Proposto            Kubernetes Padrão
+  ───────────────────────────────────────────────────────────────────────────────────
+  PODs alocados                                       10                           11
+  PODs pendentes                                       5                            4
+  Taxa de alocação                                66.67%                       73.33%
+  Violações                                            0                            5
+  Média CPU workers                                88.9%                       100.0%
+  Média Memória workers                            75.0%                        82.6%
+  Média Disco workers                              73.6%                       166.9%
+
+Conclusão:
+  O escalonador proposto considera CPU, memória, disco e latência,
+  evitando violações de recursos. O escalonador padrão do Kubernetes
+  considera apenas CPU e memória, podendo gerar alocações inválidas
+  em disco e latência, como demonstrado pelas violações acima.
