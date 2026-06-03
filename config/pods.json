@@ -1,0 +1,58 @@
+[
+    {
+        "name": "pod-api",
+        "cpu_required": 2,
+        "memory_required": 4,
+        "gpu_required": 0,
+        "priority": 2
+    },
+    {
+        "name": "pod-database",
+        "cpu_required": 4,
+        "memory_required": 8,
+        "gpu_required": 0,
+        "priority": 3
+    },
+    {
+        "name": "pod-ai-training",
+        "cpu_required": 6,
+        "memory_required": 16,
+        "gpu_required": 1,
+        "priority": 5
+    },
+    {
+        "name": "pod-cache",
+        "cpu_required": 1,
+        "memory_required": 2,
+        "gpu_required": 0,
+        "priority": 1
+    },
+    {
+        "name": "pod-monitoring",
+        "cpu_required": 2,
+        "memory_required": 2,
+        "gpu_required": 0,
+        "priority": 2
+    },
+    {
+        "name": "pod-heavy-gpu",
+        "cpu_required": 8,
+        "memory_required": 24,
+        "gpu_required": 2,
+        "priority": 4
+    },
+    {
+        "name": "pod-small-job",
+        "cpu_required": 1,
+        "memory_required": 1,
+        "gpu_required": 0,
+        "priority": 1
+    },
+    {
+        "name": "pod-report",
+        "cpu_required": 3,
+        "memory_required": 6,
+        "gpu_required": 0,
+        "priority": 2
+    }
+]

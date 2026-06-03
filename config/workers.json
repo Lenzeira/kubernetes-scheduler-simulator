@@ -1,0 +1,20 @@
+[
+    {
+        "name": "worker-1",
+        "total_cpu": 8,
+        "total_memory": 16,
+        "total_gpu": 1
+    },
+    {
+        "name": "worker-2",
+        "total_cpu": 4,
+        "total_memory": 8,
+        "total_gpu": 0
+    },
+    {
+        "name": "worker-3",
+        "total_cpu": 12,
+        "total_memory": 32,
+        "total_gpu": 2
+    }
+]

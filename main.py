@@ -1,3 +1,5 @@
+import json
+
 from src.pod import Pod
 from src.worker import Worker
 from src.master import Master
@@ -9,34 +11,46 @@ from src.metrics import (
 )
 
 
-def create_workers():
+def load_workers(file_path):
+
+    with open(file_path, "r", encoding="utf-8") as file:
+
+        workers_data = json.load(file)
 
     return [
-        Worker("worker-1", total_cpu=8, total_memory=16, total_gpu=1),
-        Worker("worker-2", total_cpu=4, total_memory=8, total_gpu=0),
-        Worker("worker-3", total_cpu=12, total_memory=32, total_gpu=2),
+        Worker(
+            worker["name"],
+            worker["total_cpu"],
+            worker["total_memory"],
+            worker["total_gpu"]
+        )
+        for worker in workers_data
     ]
 
 
-def create_pods():
+def load_pods(file_path):
+
+    with open(file_path, "r", encoding="utf-8") as file:
+
+        pods_data = json.load(file)
 
     return [
-        Pod("pod-api", cpu_required=2, memory_required=4, gpu_required=0, priority=2),
-        Pod("pod-database", cpu_required=4, memory_required=8, gpu_required=0, priority=3),
-        Pod("pod-ai-training", cpu_required=6, memory_required=16, gpu_required=1, priority=5),
-        Pod("pod-cache", cpu_required=1, memory_required=2, gpu_required=0, priority=1),
-        Pod("pod-monitoring", cpu_required=2, memory_required=2, gpu_required=0, priority=2),
-        Pod("pod-heavy-gpu", cpu_required=8, memory_required=24, gpu_required=2, priority=4),
-        Pod("pod-small-job", cpu_required=1, memory_required=1, gpu_required=0, priority=1),
-        Pod("pod-report", cpu_required=3, memory_required=6, gpu_required=0, priority=2),
+        Pod(
+            pod["name"],
+            pod["cpu_required"],
+            pod["memory_required"],
+            pod["gpu_required"],
+            pod["priority"]
+        )
+        for pod in pods_data
     ]
 
 
 def run_simulation(title, scheduler):
 
-    workers = create_workers()
+    workers = load_workers("config/workers.json")
 
-    pods = create_pods()
+    pods = load_pods("config/pods.json")
 
     master = Master(workers, scheduler)
 
