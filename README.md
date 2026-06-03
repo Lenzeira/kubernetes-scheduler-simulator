@@ -1,217 +1,349 @@
 # Kubernetes Scheduler Simulator
 
-Simulador de escalonamento de PODs inspirado no funcionamento do Kubernetes, desenvolvido em Python para a disciplina de Laboratório de Sistemas Operacionais.
+Simulação em Python de um escalonador de PODs inspirado no funcionamento do Kubernetes.
 
-O projeto implementa uma solução single-thread orientada a objetos, com um nodo Master, múltiplos nodos Workers e PODs com diferentes requisitos computacionais.
+Este projeto foi desenvolvido para a disciplina de Laboratório de Sistemas Operacionais. A proposta é representar, de forma simplificada e controlada, como um nodo Master pode distribuir PODs entre diferentes Workers a partir de métricas de alocação.
 
-A proposta é comparar um escalonador customizado, que considera métricas adicionais de alocação, com uma simulação do escalonador padrão do Kubernetes, que considera apenas CPU e memória.
-
----
-
-## Técnica Escolhida
-
-A técnica escolhida para o desenvolvimento foi uma simulação single-thread orientada a objetos.
-
-Essa escolha foi feita para manter o funcionamento do escalonador mais claro, determinístico e fácil de analisar. Como o foco principal do trabalho está na lógica de escalonamento, na distribuição dos PODs e no gerenciamento dos recursos dos Workers, a abordagem single-thread permite acompanhar cada decisão tomada pelo Master e pelos algoritmos implementados.
-
-O projeto não utiliza multithreading ou paradigma produtor-consumidor porque o objetivo principal não é simular concorrência entre processos, mas demonstrar estratégias de escalonamento de PODs em um ambiente inspirado no Kubernetes.
+A implementação foi feita em simulação, com execução local pelo terminal Linux. Essa escolha permite focar na lógica do escalonador, na estrutura dos nodos, no uso dos recursos e na comparação entre estratégias de alocação.
 
 ---
 
-## Objetivo do Projeto
+## Visão geral
 
-O objetivo do projeto é simular o processo de alocação de PODs em nodos Workers, utilizando um nodo Master responsável por coordenar o escalonamento.
+O sistema simula um ambiente com:
 
-A solução considera mais métricas do que o escalonador padrão do Kubernetes, permitindo observar como diferentes critérios podem afetar a distribuição dos PODs e o uso dos recursos computacionais.
+| Elemento | Quantidade / uso |
+|---|---:|
+| Master | 1 |
+| Workers | 3 |
+| PODs | 15 |
+| Métricas de alocação | 4 |
+| Algoritmos comparados | 2 |
+| Relatório automático | Sim |
+| Testes automatizados | Sim |
+
+A comparação principal é feita entre:
+
+| Escalonador | Métricas consideradas |
+|---|---|
+| `BalancedResourceScheduler` | CPU, memória, disco e latência |
+| `KubernetesDefaultScheduler` | CPU e memória |
+
+O objetivo não é apenas alocar o maior número possível de PODs, mas observar a qualidade da decisão de escalonamento. Em alguns casos, alocar mais PODs pode gerar violações de disco ou latência.
 
 ---
 
-## Métricas de Alocação
+## Arquitetura da simulação
 
-O escalonador proposto considera quatro métricas:
+```mermaid
+flowchart TD
+    A[config/pods.json] --> C[main.py]
+    B[config/workers.json] --> C[main.py]
 
-- CPU
-- Memória
-- Disco
-- Latência
+    C --> M[Master]
 
-A comparação é feita com uma simulação do escalonador padrão do Kubernetes, que considera apenas:
+    M --> S1[BalancedResourceScheduler]
+    M --> S2[KubernetesDefaultScheduler]
 
-- CPU
-- Memória
+    S1 --> W1[Workers]
+    S2 --> W2[Workers]
 
-Com isso, o projeto mostra que um escalonador que ignora métricas extras pode até alocar mais PODs, mas também pode gerar violações, como uso de disco acima da capacidade do Worker ou latência acima do limite aceito pelo POD.
+    W1 --> R[Relatório e estatísticas]
+    W2 --> R
 
----
-
-## Estrutura do Projeto
-
-```text
-kubernetes-scheduler-simulator/
-
-main.py
-README.md
-requirements.txt
-.gitignore
-
-config/
-workers.json
-pods.json
-
-reports/
-resultados.txt
-
-scripts/
-run.sh
-
-src/
-__init__.py
-pod.py
-worker.py
-master.py
-scheduler.py
-metrics.py
-report.py
-
-tests/
-test_scheduler.py
+    R --> T[Terminal]
+    R --> F[reports/resultados.txt]
 ```
 
----
-
-## Tecnologias Utilizadas
-
-- Python 3
-- Shell Script
-- Git
-- Linux Terminal
-- Pytest
+O `main.py` carrega os arquivos de configuração, cria os objetos da simulação, executa os dois escalonadores e gera os resultados no terminal e em arquivo.
 
 ---
 
-## Componentes Implementados
+## Técnica escolhida
 
-### Pod
+A técnica escolhida foi uma simulação **single-thread** com programação orientada a objetos.
 
-Representa uma aplicação ou tarefa que precisa ser escalonada.
+Essa decisão foi tomada para manter a execução mais clara, previsível e fácil de demonstrar. Como o foco do trabalho está no algoritmo de escalonamento e na análise dos recursos dos Workers, a abordagem single-thread facilita acompanhar cada decisão tomada pelo Master.
 
-Cada POD possui:
+O projeto não utiliza multithreading nem produtor-consumidor porque a proposta principal não é simular concorrência entre processos. O foco está em representar o processo de escalonamento, comparar estratégias e visualizar os impactos das métricas na alocação dos PODs.
 
-- Nome
-- CPU necessária
-- Memória necessária
-- Disco necessário
-- Latência máxima aceita
-- Perfil de carga
-- Prioridade
+---
+
+## Modelo conceitual
+
+```mermaid
+flowchart LR
+    P[PODs] --> M[Master]
+    M --> E[Escalonador]
+    E --> W1[Worker 1]
+    E --> W2[Worker 2]
+    E --> W3[Worker 3]
+
+    W1 --> A1[PODs alocados]
+    W2 --> A2[PODs alocados]
+    W3 --> A3[PODs alocados]
+
+    E --> PP[PODs pendentes]
+```
+
+O Master é responsável por coordenar o processo. Ele recebe a lista de PODs, ordena por prioridade e chama o algoritmo de escalonamento. O escalonador avalia os Workers disponíveis e decide se o POD será alocado ou ficará pendente.
+
+---
+
+## Métricas de alocação
+
+O escalonador proposto utiliza quatro métricas:
+
+| Métrica | Como é usada |
+|---|---|
+| CPU | Verifica se o Worker possui processamento disponível |
+| Memória | Verifica se existe memória suficiente para o POD |
+| Disco | Evita alocações acima da capacidade de armazenamento |
+| Latência | Evita Workers com latência maior que o limite aceito pelo POD |
+
+A simulação do escalonador padrão do Kubernetes considera apenas:
+
+| Métrica | Como é usada |
+|---|---|
+| CPU | Verifica capacidade de processamento |
+| Memória | Verifica capacidade de memória |
+
+Com isso, o projeto mostra que um Worker pode parecer adequado quando se observa apenas CPU e memória, mas ainda assim ser inadequado quando disco e latência entram na análise.
+
+---
+
+## Estrutura dos dados
 
 ### Worker
 
-Representa um nodo computacional disponível para receber PODs.
+Cada Worker possui capacidades computacionais próprias:
 
-Cada Worker possui:
+```text
+nome
+CPU total
+memória total
+disco total
+latência
+CPU usada
+memória usada
+disco usado
+PODs alocados
+violações registradas
+```
 
-- CPU total
-- Memória total
-- Disco total
-- Latência
-- Recursos utilizados
-- Lista de PODs alocados
+### POD
 
-### Master
+Cada POD possui requisitos diferentes:
 
-Representa o nodo central do sistema.
+```text
+nome
+CPU necessária
+memória necessária
+disco necessário
+latência máxima aceita
+perfil de carga
+prioridade
+Worker alocado
+```
 
-O Master é responsável por:
-
-- Receber a lista de PODs
-- Ordenar os PODs por prioridade
-- Acionar o algoritmo de escalonamento
-- Registrar PODs alocados
-- Registrar PODs pendentes
+Os perfis de carga ajudam o escalonador proposto a ponderar melhor as métricas. Um POD de armazenamento, por exemplo, dá mais peso ao disco. Um POD sensível à rede dá mais peso à latência.
 
 ---
 
-## Algoritmos de Escalonamento
+## Perfis de POD
+
+O projeto utiliza diferentes perfis para representar tipos variados de aplicação:
+
+| Perfil | Característica principal |
+|---|---|
+| `light` | Baixo consumo geral |
+| `balanced` | Uso equilibrado de recursos |
+| `cpu` | Maior dependência de processamento |
+| `memory` | Maior dependência de memória |
+| `storage` | Maior dependência de disco |
+| `latency` | Maior sensibilidade à latência |
+
+Esses perfis influenciam a pontuação calculada pelo escalonador proposto.
+
+---
+
+## Algoritmos implementados
 
 ### BalancedResourceScheduler
 
 É o escalonador proposto no projeto.
 
-Ele avalia os Workers disponíveis considerando:
+Ele avalia os Workers disponíveis considerando CPU, memória, disco, latência e perfil do POD. O algoritmo não escolhe simplesmente o primeiro Worker livre. Ele calcula uma pontuação e seleciona o Worker mais adequado dentro das restrições definidas.
 
-- CPU livre
-- Memória livre
-- Disco livre
-- Latência do Worker
-- Perfil do POD
-- Prioridade do POD
+Fluxo simplificado:
 
-O objetivo do algoritmo não é apenas alocar o maior número possível de PODs, mas realizar uma alocação mais criteriosa, respeitando métricas extras que impactam diretamente o funcionamento das aplicações.
+```mermaid
+flowchart TD
+    A[Receber POD] --> B[Verificar Workers disponíveis]
+    B --> C{Worker suporta CPU, memória, disco e latência?}
+    C -->|Não| D[Ignorar Worker]
+    C -->|Sim| E[Calcular pontuação]
+    E --> F[Comparar Workers viáveis]
+    F --> G[Escolher melhor Worker]
+    G --> H[Alocar POD]
+    B --> I{Nenhum Worker viável?}
+    I -->|Sim| J[Registrar POD pendente]
+```
+
+A pontuação segue a ideia:
+
+```text
+score =
+    peso_cpu      * cpu_livre
+  + peso_memoria  * memoria_livre
+  + peso_disco    * disco_livre
+  + peso_latencia * score_latencia
+```
+
+A latência é tratada de forma inversa: quanto menor a latência do Worker em relação ao limite aceito pelo POD, melhor a pontuação.
+
+---
 
 ### KubernetesDefaultScheduler
 
-Representa uma simulação simplificada do escalonador padrão do Kubernetes.
+Representa uma versão simplificada do escalonador padrão do Kubernetes dentro da simulação.
 
-Neste projeto, ele considera apenas:
+Ele considera apenas CPU e memória no momento da decisão. As métricas de disco e latência são ignoradas durante a alocação.
 
-- CPU
-- Memória
-
-Essa comparação permite mostrar o impacto de ignorar outras métricas, como disco e latência.
+Essa comparação é importante porque permite observar que uma decisão baseada apenas em CPU e memória pode gerar alocações aparentemente válidas, mas problemáticas para outras métricas do sistema.
 
 ---
 
-## Configuração da Simulação
+## Resultado da execução
 
-Os Workers são configurados no arquivo:
+Na configuração atual, o projeto processa 15 PODs em 3 Workers.
 
-```text
-config/workers.json
-```
+| Escalonador | PODs alocados | PODs pendentes | Taxa de alocação | Violações |
+|---|---:|---:|---:|---:|
+| Escalonador proposto | 10 | 5 | 66.67% | 0 |
+| Escalonador padrão do Kubernetes | 11 | 4 | 73.33% | 5 |
 
-Os PODs são configurados no arquivo:
+O escalonador padrão alocou mais PODs, mas gerou violações de disco e latência.
 
-```text
-config/pods.json
-```
-
-A simulação atual possui:
-
-- 3 Workers
-- 15 PODs
-- 4 métricas de alocação
-- 2 algoritmos comparados
+O escalonador proposto foi mais restritivo, porém respeitou todas as métricas adicionais. Essa diferença mostra que a melhor decisão de escalonamento não é necessariamente aquela que aloca mais PODs, mas aquela que respeita melhor os limites dos Workers e os requisitos das aplicações.
 
 ---
 
-## Como Executar
+## Exemplo de saída
 
-### Criar ambiente virtual
+Trecho resumido da execução:
+
+```text
+SIMULAÇÃO COM ESCALONADOR PROPOSTO
+Total de PODs processados: 15
+PODs alocados: 10
+PODs pendentes: 5
+Taxa de alocação: 66.67%
+Violações de métricas extras: nenhuma
+
+SIMULAÇÃO COM ESCALONADOR PADRÃO DO KUBERNETES
+Total de PODs processados: 15
+PODs alocados: 11
+PODs pendentes: 4
+Taxa de alocação: 73.33%
+Violações de métricas extras: 5
+```
+
+---
+
+## Estrutura do projeto
+
+```text
+kubernetes-scheduler-simulator/
+│
+├── main.py
+├── README.md
+├── requirements.txt
+├── .gitignore
+│
+├── config/
+│   ├── pods.json
+│   └── workers.json
+│
+├── reports/
+│   └── resultados.txt
+│
+├── scripts/
+│   └── run.sh
+│
+├── src/
+│   ├── __init__.py
+│   ├── master.py
+│   ├── metrics.py
+│   ├── pod.py
+│   ├── report.py
+│   ├── scheduler.py
+│   └── worker.py
+│
+└── tests/
+    └── test_scheduler.py
+```
+
+---
+
+## Principais arquivos
+
+| Arquivo | Função |
+|---|---|
+| `main.py` | Executa a simulação, compara os escalonadores e gera o relatório |
+| `config/pods.json` | Define os PODs, seus requisitos, perfis e prioridades |
+| `config/workers.json` | Define os Workers e suas capacidades computacionais |
+| `src/pod.py` | Implementa a estrutura dos PODs |
+| `src/worker.py` | Implementa os Workers e controla seus recursos |
+| `src/master.py` | Implementa o nodo Master |
+| `src/scheduler.py` | Contém os algoritmos de escalonamento |
+| `src/metrics.py` | Exibe métricas e status no terminal |
+| `src/report.py` | Gera o relatório em arquivo |
+| `reports/resultados.txt` | Armazena o resultado da última simulação |
+| `scripts/run.sh` | Script de execução pelo terminal |
+| `tests/test_scheduler.py` | Testes automatizados |
+
+---
+
+## Como executar
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/Lenzeira/kubernetes-scheduler-simulator.git
+```
+
+Entre na pasta do projeto:
+
+```bash
+cd kubernetes-scheduler-simulator
+```
+
+Crie o ambiente virtual:
 
 ```bash
 python3 -m venv .venv
 ```
 
-### Ativar ambiente virtual
+Ative o ambiente virtual:
 
 ```bash
 source .venv/bin/activate
 ```
 
-### Instalar dependências
+Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Executar pelo Python
+Execute a simulação:
 
 ```bash
 python3 main.py
 ```
 
-### Executar pelo script
+Também é possível executar pelo script:
 
 ```bash
 bash scripts/run.sh
@@ -219,52 +351,7 @@ bash scripts/run.sh
 
 ---
 
-## Relatório Gerado
-
-Após a execução, o sistema gera automaticamente o relatório:
-
-```text
-reports/resultados.txt
-```
-
-Esse relatório contém:
-
-- Total de PODs processados
-- PODs alocados
-- PODs pendentes
-- Taxa de alocação
-- Uso de CPU, memória e disco por Worker
-- Latência dos Workers
-- Lista de PODs alocados em cada Worker
-- Violações de métricas extras
-
----
-
-## Resultados da Simulação
-
-### Escalonador Proposto
-
-- Total de PODs: 15
-- PODs alocados: 10
-- PODs pendentes: 5
-- Taxa de alocação: 66.67%
-- Violações de métricas extras: nenhuma
-
-### Escalonador Padrão do Kubernetes
-
-- Total de PODs: 15
-- PODs alocados: 11
-- PODs pendentes: 4
-- Taxa de alocação: 73.33%
-- Violações de métricas extras: 5
-
-Apesar de o escalonador padrão alocar mais PODs, ele gera violações de disco e latência. Já o escalonador proposto é mais restritivo, mas respeita as métricas adicionais definidas no trabalho.
-
-Essa diferença é importante porque mostra que a melhor solução nem sempre é aquela que aloca mais PODs, mas aquela que respeita melhor os limites dos Workers e os requisitos das aplicações.
-
----
-
-## Execução dos Testes
+## Testes
 
 Para executar os testes automatizados:
 
@@ -272,35 +359,69 @@ Para executar os testes automatizados:
 PYTHONPATH=. pytest
 ```
 
-Os testes verificam:
+Resultado esperado:
 
-- Alocação de PODs considerando todas as métricas
-- Rejeição de PODs por disco insuficiente
-- Rejeição de PODs por latência acima do limite
-- Seleção correta de Worker pelo escalonador proposto
-- Comportamento do escalonador padrão ignorando disco e latência
-- Registro de PODs pendentes pelo Master
+```text
+6 passed
+```
 
----
+Os testes cobrem:
 
-## Comparação Técnica com o Kubernetes
-
-O escalonador padrão do Kubernetes utiliza CPU e memória como critérios principais de decisão.
-
-Neste projeto, a solução proposta amplia essa lógica ao considerar também disco e latência. Dessa forma, o escalonador customizado consegue evitar alocações que, mesmo possíveis do ponto de vista de CPU e memória, seriam problemáticas para outras métricas importantes do sistema.
-
-Na simulação executada, o escalonador padrão alocou mais PODs, porém gerou violações de disco e latência. O escalonador proposto alocou menos PODs, mas manteve a integridade das métricas adicionais.
+| Teste | O que verifica |
+|---|---|
+| Alocação com todas as métricas | Confirma que um POD válido pode ser alocado |
+| Disco insuficiente | Confirma rejeição quando não há espaço em disco |
+| Latência alta | Confirma rejeição quando a latência passa do limite |
+| Escalonador proposto | Confirma seleção de Worker viável |
+| Escalonador padrão | Confirma que disco e latência são ignorados |
+| POD pendente | Confirma registro de PODs não alocados |
 
 ---
 
-## Objetivo Acadêmico
+## Relatório
 
-Este projeto foi desenvolvido para fins acadêmicos, com foco nos conceitos de:
+A cada execução, o sistema gera automaticamente:
 
-- Sistemas Operacionais
-- Escalonamento
-- Gerenciamento de recursos
-- Shell Script
-- Simulação de ambiente Kubernetes
-- Comparação entre algoritmos
-- Organização e reprodutibilidade em GitHub
+```text
+reports/resultados.txt
+```
+
+O relatório apresenta:
+
+```text
+total de PODs processados
+PODs alocados
+PODs pendentes
+taxa de alocação
+uso de CPU, memória e disco por Worker
+latência de cada Worker
+PODs alocados em cada Worker
+violações de métricas extras
+```
+
+Esse arquivo facilita a análise dos resultados e pode ser usado como apoio na apresentação do trabalho.
+
+---
+
+## Relação com os critérios do trabalho
+
+| Critério | Atendimento no projeto |
+|---|---|
+| Estrutura do Master | Classe `Master` em `src/master.py` |
+| Workers e capacidades | Classe `Worker` e arquivo `config/workers.json` |
+| Mais de uma dezena de PODs | 15 PODs definidos em `config/pods.json` |
+| Métricas de alocação | CPU, memória, disco e latência |
+| Algoritmo de escalonamento | `BalancedResourceScheduler` |
+| Distribuição dos PODs | Exibida no terminal e no relatório |
+| Monitoramento | Uso de recursos por Worker |
+| Estatísticas | Taxa de alocação, pendências e violações |
+| Comparação com Kubernetes | `KubernetesDefaultScheduler` |
+| Reprodutibilidade | README, script, testes e GitHub |
+
+---
+
+## Observações finais
+
+Esta implementação não executa PODs reais em um cluster Kubernetes. Ela reproduz em simulação os elementos centrais pedidos no trabalho: Master, Workers, PODs, métricas de alocação, algoritmo de escalonamento, monitoramento, estatísticas e comparação com uma estratégia baseada no escalonador padrão.
+
+A escolha por simulação permitiu concentrar a implementação na lógica do escalonador e na análise das decisões tomadas durante a alocação.
