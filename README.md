@@ -1,16 +1,16 @@
 # Kubernetes Scheduler Simulator
 
-Simulação em Python de um escalonador de PODs inspirado no funcionamento do Kubernetes.
+Este projeto é uma simulação em Python de um escalonador de PODs inspirado no funcionamento do Kubernetes.
 
-Este projeto foi desenvolvido para a disciplina de Laboratório de Sistemas Operacionais. A proposta é representar, de forma simples e controlada, como um nodo Master pode distribuir PODs entre diferentes Workers considerando múltiplas métricas de alocação.
+A ideia do trabalho é representar um ambiente com um nodo Master, alguns Workers e um conjunto de PODs com diferentes necessidades computacionais. A partir disso, o sistema decide onde cada POD deve ser alocado, considerando os recursos disponíveis em cada Worker.
 
-A implementação foi feita em simulação, com execução local pelo terminal Linux. O foco do trabalho está na lógica do escalonamento, na organização dos nodos, na análise dos recursos disponíveis e na comparação entre duas estratégias de alocação.
+A implementação foi feita em simulação, rodando localmente pelo terminal Linux. Essa escolha permite focar na lógica do escalonador, na comparação entre estratégias de alocação e na visualização dos recursos ocupados e disponíveis.
 
 ---
 
-## Visão geral
+## Visão geral do projeto
 
-A simulação possui:
+A simulação trabalha com:
 
 | Elemento | Quantidade |
 |---|---:|
@@ -22,14 +22,14 @@ A simulação possui:
 | Relatório automático | Sim |
 | Testes automatizados | Sim |
 
-O projeto compara dois escalonadores:
+O projeto compara dois comportamentos:
 
 | Escalonador | Métricas consideradas |
 |---|---|
 | `BalancedResourceScheduler` | CPU, memória, disco e latência |
 | `KubernetesDefaultScheduler` | CPU e memória |
 
-O objetivo não é apenas alocar a maior quantidade possível de PODs, mas avaliar a qualidade da decisão de escalonamento. Um Worker pode parecer disponível quando se observa apenas CPU e memória, mas ainda assim não ser adequado por falta de disco ou por latência acima do limite aceito pelo POD.
+O escalonador proposto considera mais métricas do que a versão usada como referência do Kubernetes. Isso permite observar situações em que um Worker parece adequado olhando apenas para CPU e memória, mas não seria uma boa escolha quando disco e latência também são considerados.
 
 ---
 
@@ -37,20 +37,22 @@ O objetivo não é apenas alocar a maior quantidade possível de PODs, mas avali
 
 A técnica escolhida foi uma simulação **single-thread** com programação orientada a objetos.
 
-Essa escolha deixa a execução mais previsível e facilita a explicação do funcionamento do escalonador. Como o foco do trabalho é analisar as decisões do Master e a distribuição dos PODs, a abordagem single-thread permite acompanhar a ordem das alocações sem adicionar complexidade desnecessária.
+Essa escolha foi feita para deixar a execução mais clara e fácil de acompanhar. Como o foco do trabalho está no processo de escalonamento, a abordagem single-thread permite visualizar melhor a ordem das decisões, a escolha dos Workers e os motivos pelos quais alguns PODs são alocados ou ficam pendentes.
 
-O projeto não utiliza multithreading nem produtor-consumidor porque a proposta principal não é simular concorrência entre processos, mas implementar e comparar estratégias de escalonamento.
+O projeto não usa multithreading nem produtor-consumidor porque a proposta principal não é simular concorrência entre processos. O foco está na lógica de alocação dos PODs e na comparação entre os algoritmos.
 
 ---
 
-## Funcionamento da simulação
+## Como a simulação funciona
 
-A simulação parte de dois arquivos de configuração:
+A simulação começa a partir de dois arquivos de configuração:
 
-- `config/pods.json`, com os PODs que precisam ser alocados;
-- `config/workers.json`, com os Workers disponíveis e suas capacidades.
+| Arquivo | Função |
+|---|---|
+| `config/pods.json` | Define os PODs que serão processados |
+| `config/workers.json` | Define os Workers disponíveis e suas capacidades |
 
-Fluxo geral do projeto:
+O fluxo geral é este:
 
 ```text
 config/pods.json       config/workers.json
@@ -74,7 +76,7 @@ Escalonador proposto   Escalonador padrão
        Terminal + reports/resultados.txt
 ```
 
-O `main.py` carrega os dados da simulação, cria os objetos principais, executa os dois escalonadores e gera a saída no terminal e no relatório.
+O `main.py` carrega os dados, cria os objetos da simulação, executa os dois escalonadores e mostra os resultados no terminal. Ao final, também é gerado um relatório em `reports/resultados.txt`.
 
 ---
 
@@ -82,33 +84,37 @@ O `main.py` carrega os dados da simulação, cria os objetos principais, executa
 
 O escalonador proposto considera quatro métricas:
 
-| Métrica | Uso na simulação |
+| Métrica | O que representa |
 |---|---|
-| CPU | Verifica se o Worker possui processamento disponível |
-| Memória | Verifica se existe memória suficiente para o POD |
-| Disco | Evita alocações acima da capacidade de armazenamento |
-| Latência | Evita Workers com latência maior que o limite aceito pelo POD |
+| CPU | Capacidade de processamento disponível no Worker |
+| Memória | Quantidade de memória disponível |
+| Disco | Espaço de armazenamento disponível |
+| Latência | Tempo de resposta do Worker em relação ao limite aceito pelo POD |
 
 A simulação do escalonador padrão considera apenas:
 
-| Métrica | Uso na simulação |
+| Métrica | O que representa |
 |---|---|
-| CPU | Verifica capacidade de processamento |
-| Memória | Verifica capacidade de memória |
+| CPU | Capacidade de processamento |
+| Memória | Quantidade de memória disponível |
 
-Essa comparação mostra o impacto de incluir métricas além das usadas pelo escalonador padrão. Em alguns casos, o escalonador padrão consegue alocar mais PODs, mas gera violações em métricas que ele não considera.
+Essa diferença é importante porque mostra que uma alocação pode parecer válida usando apenas CPU e memória, mas ainda assim causar problemas quando outras métricas entram na análise.
 
 ---
 
-## Estruturas implementadas
+## Estruturas principais
 
 ### Master
 
-O Master é o nodo central da simulação. Ele recebe a lista de PODs, ordena por prioridade e chama o escalonador responsável por decidir onde cada POD será alocado.
+O Master é o nodo central da simulação.
+
+Ele recebe a lista de PODs, organiza a ordem de processamento por prioridade e chama o escalonador para decidir onde cada POD será alocado.
 
 ### Workers
 
-Os Workers representam os nodos que recebem os PODs. Cada Worker possui:
+Os Workers representam os nodos disponíveis para receber os PODs.
+
+Cada Worker possui:
 
 ```text
 CPU total
@@ -124,7 +130,9 @@ violações registradas
 
 ### PODs
 
-Cada POD representa uma aplicação ou tarefa que precisa ser escalonada. Cada um possui:
+Cada POD representa uma aplicação ou tarefa que precisa ser alocada em algum Worker.
+
+Cada POD possui:
 
 ```text
 nome
@@ -141,28 +149,28 @@ Worker alocado
 
 ## Perfis de POD
 
-Os PODs foram configurados com diferentes perfis de carga:
+Os PODs possuem perfis diferentes para representar tipos variados de carga.
 
 | Perfil | Característica |
 |---|---|
 | `light` | Baixo consumo geral |
-| `balanced` | Uso equilibrado de recursos |
+| `balanced` | Uso equilibrado dos recursos |
 | `cpu` | Maior dependência de processamento |
 | `memory` | Maior dependência de memória |
 | `storage` | Maior dependência de disco |
 | `latency` | Maior sensibilidade à latência |
 
-Esses perfis influenciam o cálculo do escalonador proposto. Por exemplo, um POD com perfil `storage` dá mais peso ao disco, enquanto um POD com perfil `latency` dá mais peso à latência.
+Esses perfis influenciam o cálculo do escalonador proposto. Por exemplo, um POD com perfil `storage` dá mais importância ao espaço em disco, enquanto um POD com perfil `latency` prioriza Workers com menor latência.
 
 ---
 
-## Algoritmos de escalonamento
+## Algoritmos implementados
 
 ### BalancedResourceScheduler
 
-É o escalonador proposto no projeto.
+Este é o escalonador proposto no trabalho.
 
-Ele avalia os Workers disponíveis considerando CPU, memória, disco, latência e perfil do POD. A decisão não é feita simplesmente escolhendo o primeiro Worker disponível. O algoritmo calcula uma pontuação para cada Worker viável e seleciona o mais adequado.
+Ele avalia os Workers disponíveis considerando CPU, memória, disco, latência e perfil do POD. A decisão não é feita apenas escolhendo o primeiro Worker livre. O algoritmo calcula uma pontuação para cada Worker viável e seleciona aquele que oferece a melhor condição para o POD.
 
 Fluxo simplificado:
 
@@ -175,7 +183,7 @@ Fluxo simplificado:
 6. Alocar o POD ou registrar como pendente
 ```
 
-A pontuação segue a ideia:
+A pontuação segue esta ideia:
 
 ```text
 score =
@@ -185,17 +193,17 @@ score =
   + peso_latencia * score_latencia
 ```
 
-A latência é tratada de forma inversa: quanto menor a latência do Worker em relação ao limite aceito pelo POD, melhor a pontuação.
+A latência é tratada de forma inversa. Quanto menor a latência do Worker em relação ao limite aceito pelo POD, melhor a pontuação.
 
 ---
 
 ### KubernetesDefaultScheduler
 
-Representa uma simulação simplificada do escalonador padrão do Kubernetes.
+Este escalonador representa uma versão simplificada do comportamento padrão do Kubernetes dentro da simulação.
 
-Nesta implementação, ele considera apenas CPU e memória. As métricas de disco e latência são ignoradas durante a decisão de alocação.
+Ele considera apenas CPU e memória durante a decisão de alocação. As métricas de disco e latência são ignoradas.
 
-Essa comparação ajuda a mostrar que uma decisão baseada apenas em CPU e memória pode parecer válida inicialmente, mas gerar problemas quando outras métricas importantes são observadas.
+Essa comparação ajuda a mostrar que uma decisão baseada somente em CPU e memória pode alocar mais PODs, mas também pode gerar violações em métricas importantes para o funcionamento da aplicação.
 
 ---
 
@@ -210,7 +218,7 @@ Na configuração atual, o projeto processa 15 PODs em 3 Workers.
 
 O escalonador padrão alocou mais PODs, mas gerou violações de disco e latência.
 
-O escalonador proposto foi mais restritivo, porém respeitou todas as métricas adicionais. Isso mostra que a melhor decisão de escalonamento não é necessariamente aquela que aloca mais PODs, mas aquela que respeita melhor os limites dos Workers e os requisitos das aplicações.
+O escalonador proposto foi mais restritivo, mas respeitou todas as métricas adicionais. Isso mostra que a melhor decisão de escalonamento não é necessariamente aquela que aloca mais PODs, mas aquela que respeita melhor os limites dos Workers e os requisitos das aplicações.
 
 ---
 
@@ -277,15 +285,15 @@ kubernetes-scheduler-simulator/
 |---|---|
 | `main.py` | Executa a simulação, compara os escalonadores e gera o relatório |
 | `config/pods.json` | Define os PODs, seus requisitos, perfis e prioridades |
-| `config/workers.json` | Define os Workers e suas capacidades computacionais |
+| `config/workers.json` | Define os Workers e suas capacidades |
 | `src/pod.py` | Implementa a estrutura dos PODs |
 | `src/worker.py` | Implementa os Workers e controla seus recursos |
 | `src/master.py` | Implementa o nodo Master |
 | `src/scheduler.py` | Contém os algoritmos de escalonamento |
-| `src/metrics.py` | Exibe métricas e status no terminal |
-| `src/report.py` | Gera o relatório em arquivo |
-| `reports/resultados.txt` | Armazena o resultado da última simulação |
-| `scripts/run.sh` | Script de execução pelo terminal |
+| `src/metrics.py` | Mostra métricas e status no terminal |
+| `src/report.py` | Gera o relatório final |
+| `reports/resultados.txt` | Armazena o resultado da última execução |
+| `scripts/run.sh` | Script simples para rodar o projeto pelo terminal |
 | `tests/test_scheduler.py` | Testes automatizados |
 
 ---
@@ -294,9 +302,11 @@ kubernetes-scheduler-simulator/
 
 Para executar o projeto, é necessário ter:
 
-- Python 3;
-- Git;
-- terminal Linux.
+```text
+Python 3
+Git
+Terminal Linux
+```
 
 Para rodar os testes, também é necessário instalar o Pytest.
 
@@ -396,7 +406,7 @@ PODs alocados em cada Worker
 violações de métricas extras
 ```
 
-Esse arquivo facilita a análise dos resultados e pode ser usado como apoio na apresentação do trabalho.
+Esse arquivo ajuda na análise dos resultados e também serve como apoio para a apresentação do trabalho.
 
 ---
 
@@ -419,14 +429,14 @@ Esse arquivo facilita a análise dos resultados e pode ser usado como apoio na a
 
 ## Sobre o script Shell
 
-O arquivo `scripts/run.sh` é um script simples para executar o projeto pelo terminal Linux.
+O arquivo `scripts/run.sh` é apenas um atalho para executar o projeto pelo terminal Linux.
 
-Por isso o GitHub pode mostrar uma pequena porcentagem de linguagem `Shell` no repositório. A maior parte do projeto continua sendo Python.
+Por esse motivo, o GitHub pode mostrar uma pequena porcentagem da linguagem `Shell` no repositório. A maior parte do projeto continua sendo Python.
 
 ---
 
 ## Observações finais
 
-Esta implementação não executa PODs reais em um cluster Kubernetes. Ela reproduz em simulação os elementos centrais pedidos no trabalho: Master, Workers, PODs, métricas de alocação, algoritmo de escalonamento, monitoramento, estatísticas e comparação com uma estratégia baseada no escalonador padrão.
+Esta implementação não executa PODs reais em um cluster Kubernetes. Ela reproduz, em simulação, os elementos centrais pedidos no trabalho: Master, Workers, PODs, métricas de alocação, algoritmo de escalonamento, monitoramento, estatísticas e comparação com uma estratégia baseada no escalonador padrão.
 
-A escolha por simulação permitiu concentrar a implementação na lógica do escalonador e na análise das decisões tomadas durante a alocação.
+A escolha pela simulação permitiu concentrar a implementação na lógica do escalonador e na análise das decisões tomadas durante a alocação dos PODs.
